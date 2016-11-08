@@ -2,6 +2,7 @@
 var actorChars = {
   "@": Player,
   "o": Coin, // A coin will wobble up and down
+  's' : Spike,
   "=": Lava, "|": Lava, "v": Lava  
 };
 
@@ -88,6 +89,13 @@ function Coin(pos) {
   this.wobble = Math.random() * Math.PI * 2;
 }
 Coin.prototype.type = "coin";
+
+function Spike(pos) {
+  this.basePos = this.pos = pos.plus(new Vector(0.3,0));
+  this.size = new Vector(0.5, 1.0);
+  this.throttle = Math.random() * Math.PI * 2;
+}
+Spike.prototype.type = 'spike';
 
 // Lava is initialized based on the character, but otherwise has a
 // size and position
@@ -304,6 +312,14 @@ Coin.prototype.act = function(step) {
   this.pos = this.basePos.plus(new Vector(0, wobblePos));
 };
 
+var throttleSpeed = 4;
+var throttleDist = 3;
+Spike.prototype.act = function(step) {
+  this.throttle += step * throttleSpeed;
+  var throttlePos = Math.sin(this.throttle) * throttleDist;
+  this.pos = this.basePos.plus(new Vector(0, throttlePos));
+};
+
 var maxStep = 0.05;
 
 var playerXSpeed = 7;
@@ -374,6 +390,11 @@ Level.prototype.playerTouched = function(type, actor) {
     this.actors = this.actors.filter(function(other) {
       return other != actor;
     });
+    if (type == "spike") {
+      this.actors = this.actors.filter(function(other) {
+        return other != actor;
+      });
+    }
     // If there aren't any coins left, player wins
     if (!this.actors.some(function(actor) {
            return actor.type == "coin";
